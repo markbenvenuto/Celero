@@ -284,11 +284,6 @@ void Experiment::addProblemSpace(int64_t x, double scale, uint64_t iterations)
 
 size_t Experiment::getResultSize()
 {
-	if(this->pimpl->results.empty() == true)
-	{
-		this->pimpl->results.push_back(std::make_shared<Result>(this));
-	}
-
 	return this->pimpl->results.size();
 }
 
