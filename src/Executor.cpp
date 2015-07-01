@@ -102,7 +102,6 @@ void executor::RunBaseline(std::shared_ptr<Benchmark> bmark)
 			{
 				if(i.second != 0)
 				{
-
 					baselineExperiment->addProblemSpace(i.first, static_cast<double>(valueResultScale), i.second);
 				}
 				else
@@ -115,7 +114,7 @@ void executor::RunBaseline(std::shared_ptr<Benchmark> bmark)
 			// This is needed to get the result size later.
 			if(baselineExperiment->getResultSize() == 0)
 			{
-				baselineExperiment->addProblemSpace(0, valueResultScale, baselineExperiment->getIterations());
+				baselineExperiment->addProblemSpace(0);
 			}
 		}
 
@@ -147,8 +146,6 @@ void executor::RunExperiments(std::shared_ptr<Benchmark> bmark)
 {
 	auto experimentSize = bmark->getExperimentSize();
 
-	std::cout << "runex - " << experimentSize<< std::endl;
-
 	for(size_t i = 0; i < experimentSize; i++)
 	{
 		auto e = bmark->getExperiment(i);
@@ -167,7 +164,6 @@ void executor::Run(std::shared_ptr<Experiment> e)
 	{
 		executor::RunBaseline(bmark);
 	}
-										std::cout << "ii4- " << e->getResultSize() << std::endl;
 
 	// Populate the problem space with a fake test fixture instantiation.
 	{
@@ -177,17 +173,10 @@ void executor::Run(std::shared_ptr<Experiment> e)
 		{
 			if(i.second != 0)
 			{
-										std::cout << "it1 - " << i.second << std::endl;
-
-
 				e->addProblemSpace(i.first, valueResultScale, i.second);
 			}
 			else
 			{
-										std::cout << "ii2 - " << e->getIterations() << std::endl;
-
-
-
 				e->addProblemSpace(i.first, valueResultScale, e->getIterations());
 			}
 		}
@@ -196,9 +185,7 @@ void executor::Run(std::shared_ptr<Experiment> e)
 		// This is needed to get the result size later.
 		if(e->getResultSize() == 0)
 		{
-										std::cout << "ii3 - " << e->getIterations() << std::endl;
-
-			e->addProblemSpace(0, valueResultScale, e->getIterations());
+			e->addProblemSpace(0);
 		}
 	}
 

@@ -84,11 +84,8 @@ Experiment* Result::getExperiment() const
 	return this->pimpl->parent;
 }
 
-#include <iostream>
-
 void Result::setProblemSpaceValue(int64_t x, double scale, uint64_t iterations)
 {
-	std::cout << "SetPSV -- " << iterations << std::endl;
 	this->pimpl->problemSpaceValue = x;
 	this->pimpl->problemSpaceValueScale = scale;
 	this->pimpl->problemSpaceIterations = iterations;
