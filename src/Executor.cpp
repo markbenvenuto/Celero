@@ -114,8 +114,8 @@ void executor::RunBaseline(std::shared_ptr<Benchmark> bmark)
 			// This is needed to get the result size later.
 			if(baselineExperiment->getResultSize() == 0)
 			{
-				baselineExperiment->addProblemSpace(0);
-			}
+                baselineExperiment->addProblemSpace(0, valueResultScale, baselineExperiment->getIterations());
+            }
 		}
 
 		for(size_t i = 0; i < baselineExperiment->getResultSize(); i++)
@@ -185,7 +185,7 @@ void executor::Run(std::shared_ptr<Experiment> e)
 		// This is needed to get the result size later.
 		if(e->getResultSize() == 0)
 		{
-			e->addProblemSpace(0);
+            e->addProblemSpace(0, valueResultScale, e->getIterations());
 		}
 	}
 
