@@ -50,9 +50,11 @@ unsigned long long getTimeOfDay() {
 #endif
 
 #ifdef DO_SINGLE
+#define SAMPLES_S 10
+#define ITERATIONS_S 100000
 
 // Shortened up the name from "StackOverflowSimpleComparison"
-BASELINE(DemoSimple, Baseline, 10, 1000000)
+BASELINE(DemoSimple, Baseline, 10, ITERATIONS_S)
 {
     sin(3.14159265);
 }
@@ -61,7 +63,7 @@ std::random_device RandomDevice;
 std::uniform_int_distribution<int> UniformDistribution(0, 1024);
 
 
-BENCHMARK(DemoSimple, SinRandomw, 10, 1000000)
+BENCHMARK(DemoSimple, SinRandomw, 10, ITERATIONS_S)
 {
     sin(UniformDistribution(RandomDevice));
 }
@@ -75,6 +77,17 @@ BENCHMARK(DemoSimple, SinRandomw, 10, 1000000)
     DECL(GetTickCount64, curTimeMicros64_GTC) \
     DECL(QueryUnbiasedInterruptTime, curTimeMicros64_QUIT) 
 
+#elif defined(__sunos__)
+
+unsigned long long gethrtime2() {
+    hrtime_t t = getthrtime();
+    return t;
+}
+
+#define CLOCK_FUNCTIONS(DECL) \
+    DECL(getTimeOfDay, getTimeOfDay) \
+    DECL(gethrtime,gethrtime2) 
+
 #else
 #define CLOCK_FUNCTIONS(DECL) \
     DECL(getTimeOfDay, getTimeOfDay) 
@@ -82,7 +95,7 @@ BENCHMARK(DemoSimple, SinRandomw, 10, 1000000)
 #endif
 
 #define BENCH_CLOCK_DECL(name, func) \
-    BENCHMARK(DemoSimple, name, 10, 1000000) { \
+    BENCHMARK(DemoSimple, name, 10, ITERATIONS_S) { \
         func(); \
     } 
 
@@ -90,35 +103,56 @@ CLOCK_FUNCTIONS(BENCH_CLOCK_DECL);
 
 // More platform specific functions
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__sunos__)
+
+#ifdef __sunos__
 
 #define POSIX_CLOCK_FUNCTIONS(DECL) \
-    DECL(Realtime, CLOCK_REALTIME)  \
-    DECL(Realtime2, CLOCK_REALTIME_COARSE) \
-    DECL(Realtime3, CLOCK_REALTIME_COARSE2) 
+    DECL(REALTIME0, __CLOCK_REALTIME0) \
+    DECL(VIRTUAL, CLOCK_VIRTUAL) \
+    DECL(THREAD_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID) \
+    DECL(REALTIME, CLOCK_REALTIME) \
+    DECL(MONOTONIC, CLOCK_MONOTONIC) \
+    DECL(PROCESS_CPUTIME_ID, CLOCK_PROCESS_CPUTIME_ID) \
+    DECL(HIGHRES, CLOCK_HIGHRES) \
+    DECL(PROF, CLOCK_PROF)
 
-POSIX_CLOCK_FUNCTIONS(BENCH_CLOCK_DECL);
+#else
 
-#define BENCH_CLOCK_DECL(name, clock) \
-    BENCHMARK(DemoSimple, name, 10, 1000000) { \
-       timespec tp; \    
-        clock_gettime(clock, &tp); \
-    } 
-
-#define CLOCK_REALTIME			0
-#define CLOCK_MONOTONIC			1
-#define CLOCK_PROCESS_CPUTIME_ID	2
-#define CLOCK_THREAD_CPUTIME_ID		3
-#define CLOCK_MONOTONIC_RAW		4
-#define CLOCK_REALTIME_COARSE		5
-#define CLOCK_MONOTONIC_COARSE		6
-#define CLOCK_BOOTTIME			7
-#define CLOCK_REALTIME_ALARM		8
-#define CLOCK_BOOTTIME_ALARM		9
-#define CLOCK_SGI_CYCLE			10	/* Hardware specific */
-#define CLOCK_TAI			11
+#define POSIX_CLOCK_FUNCTIONS(DECL) \
+    DECL(REALTIME, CLOCK_REALTIME) \
+    DECL(MONOTONIC, CLOCK_MONOTONIC) \
+    DECL(PROCESS_CPUTIME_ID, CLOCK_PROCESS_CPUTIME_ID) \
+    DECL(THREAD_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID) \
+    DECL(MONOTONIC_RAW, CLOCK_MONOTONIC_RAW) \
+    DECL(REALTIME_COARSE, CLOCK_REALTIME_COARSE) \
+    DECL(MONOTONIC_COARSE, CLOCK_MONOTONIC_COARSE) \
+    DECL(BOOTTIME, CLOCK_BOOTTIME) \
+    DECL(REALTIME_ALARM, CLOCK_REALTIME_ALARM) \
+    DECL(BOOTTIME_ALARM, CLOCK_BOOTTIME_ALARM) \
+    DECL(TAI, CLOCK_TAI)
 
 #endif
+
+#define BENCH_CLOCK_DECL2(name, clock) \
+    BENCHMARK(DemoSimple, name, 10, ITERATIONS_S) { \
+       timespec tp; \
+        clock_gettime(clock, &tp); \
+    }
+
+POSIX_CLOCK_FUNCTIONS(BENCH_CLOCK_DECL2);
+
+#endif
+
+#ifdef __APPLE_
+
+#define APPLE_CLOCK_FUNCTIONS(DECL) \
+    DECL(machAbsoluteTime, mach_absolute_time) 
+
+APPLE_CLOCK_FUNCTIONS(BENCH_CLOCK_DECL);
+
+#endif
+
 
 #else // DO_MULTI
 
