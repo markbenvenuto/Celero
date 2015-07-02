@@ -13,7 +13,7 @@
 ///
 CELERO_MAIN
 
-#define DO_SINGLE 1
+//#define DO_SINGLE 1
 
 #ifdef _WIN32
 
@@ -49,12 +49,16 @@ unsigned long long getTimeOfDay() {
 
 #endif
 
-#ifdef DO_SINGLE
 #define SAMPLES_S 10
-#define ITERATIONS_S 100000
+#define ITERATIONS_S 1000000
 
+#define SAMPLES_T 10
+#define ITERATIONS_T 100000000
+#define THREADS_T 12
+
+#ifdef DO_SINGLE
 // Shortened up the name from "StackOverflowSimpleComparison"
-BASELINE(DemoSimple, Baseline, 10, ITERATIONS_S)
+BASELINE(DemoSimple, Baseline, SAMPLES_S, ITERATIONS_S)
 {
     sin(3.14159265);
 }
@@ -63,10 +67,38 @@ std::random_device RandomDevice;
 std::uniform_int_distribution<int> UniformDistribution(0, 1024);
 
 
-BENCHMARK(DemoSimple, SinRandomw, 10, ITERATIONS_S)
+BENCHMARK(DemoSimple, SinRandomw, SAMPLES_S, ITERATIONS_S)
 {
     sin(UniformDistribution(RandomDevice));
 }
+
+#else
+class ClockFixture : public celero::ThreadTestFixture {
+public:
+    int counter;
+
+    void setUp(int64_t) override {
+        this->counter = 0;
+}
+};
+
+BASELINE_T(Multithread, Baseline, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS_T) {
+    sin(3.14159265);
+}
+
+/*BASELINE_T(Multithread, Baseline, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS_T) {
+    ++counter;
+}*/
+
+
+#endif
+
+#ifdef DO_SINGLE
+#define MY_BENCHMARK(benchmarkName) BENCHMARK_IMPL(Simple, benchmarkName, ::celero::TestFixture, SAMPLES_S, ITERATIONS_S, 1)
+#else
+#define MY_BENCHMARK(benchmarkName) BENCHMARK_IMPL(Multithread, benchmarkName, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS_T)
+#endif
+
 
 // name, func
 #ifdef _WIN32
@@ -95,7 +127,7 @@ unsigned long long gethrtime2() {
 #endif
 
 #define BENCH_CLOCK_DECL(name, func) \
-    BENCHMARK(DemoSimple, name, 10, ITERATIONS_S) { \
+    MY_BENCHMARK(name) { \
         func(); \
     } 
 
@@ -129,13 +161,13 @@ CLOCK_FUNCTIONS(BENCH_CLOCK_DECL);
     DECL(MONOTONIC_COARSE, CLOCK_MONOTONIC_COARSE) \
     DECL(BOOTTIME, CLOCK_BOOTTIME) \
     DECL(REALTIME_ALARM, CLOCK_REALTIME_ALARM) \
-    DECL(BOOTTIME_ALARM, CLOCK_BOOTTIME_ALARM) \
-    DECL(TAI, CLOCK_TAI)
+    DECL(BOOTTIME_ALARM, CLOCK_BOOTTIME_ALARM)
+    //DECL(TAI, CLOCK_TAI) // Not on Ubuntu 14.04 LTS
 
 #endif
 
 #define BENCH_CLOCK_DECL2(name, clock) \
-    BENCHMARK(DemoSimple, name, 10, ITERATIONS_S) { \
+    MY_BENCHMARK(name) { \
        timespec tp; \
         clock_gettime(clock, &tp); \
     }
@@ -152,47 +184,3 @@ POSIX_CLOCK_FUNCTIONS(BENCH_CLOCK_DECL2);
 APPLE_CLOCK_FUNCTIONS(BENCH_CLOCK_DECL);
 
 #endif
-
-
-#else // DO_MULTI
-
-class ClockFixture : public celero::ThreadTestFixture {
-public:
-    int counter;
-
-    void setUp(int64_t) override {
-        this->counter = 0;
-    }
-};
-
-#define SAMPLES_T 10
-#define ITERATIONS_T 1000000
-#define THREADS_T 12
-
-BASELINE_T(DemoMultithread, Baseline, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS_T) {
-    ++counter;
-}
-
-#ifdef _WIN32
-BENCHMARK_T(DemoMultithread, getPerfCounter, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS_T) {
-    curTimeMicros64PP();
-}
-
-BENCHMARK_T(DemoMultithread, GetCurrentTime, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS_T) {
-    GetCurrentTime();
-}
-
-BENCHMARK_T(DemoMultithread, GetTickCount64, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS_T) {
-    curTimeMicros64_GTC();
-}
-
-BENCHMARK_T(DemoMultithread, QueryUnbiasedInterruptTime, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS_T) {
-    curTimeMicros64_QUIT();
-}
-#else
-BENCHMARK_T(DemoMultithread, GetTimeOfDay, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS_T) {
-    getTimeOfDay();
-}
-#endif
-
-#endif // DO_MULTI
