@@ -91,7 +91,8 @@ endif()
  
 if(UNIX)
 	if(CMAKE_COMPILER_IS_GNUCXX) 
-	  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -std=gnu++11 -Wall -O3" CACHE STRING "Compiler Flags for All Builds" FORCE) 
+		# -pthread is required on Ubuntu 14.04 LTS
+	  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -std=gnu++11 -Wall -O3 -pthread" CACHE STRING "Compiler Flags for All Builds" FORCE) 
 	  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pedantic -O0 -g" CACHE STRING "Compiler Flags for Debug Builds" FORCE) 
 	  set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING "Compiler Flags for Release Builds" FORCE) 
 	else()

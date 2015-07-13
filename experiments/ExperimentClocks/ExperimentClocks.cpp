@@ -58,7 +58,7 @@ unsigned long long getTimeOfDay() {
 
 #ifdef DO_SINGLE
 // Shortened up the name from "StackOverflowSimpleComparison"
-BASELINE(DemoSimple, Baseline, SAMPLES_S, ITERATIONS_S)
+BASELINE(Simple, Baseline, SAMPLES_S, ITERATIONS_S)
 {
     sin(3.14159265);
 }
@@ -67,7 +67,7 @@ std::random_device RandomDevice;
 std::uniform_int_distribution<int> UniformDistribution(0, 1024);
 
 
-BENCHMARK(DemoSimple, SinRandomw, SAMPLES_S, ITERATIONS_S)
+BENCHMARK(Simple, SinRandomw, SAMPLES_S, ITERATIONS_S)
 {
     sin(UniformDistribution(RandomDevice));
 }
@@ -109,10 +109,10 @@ BASELINE_T(Multithread, Baseline, ClockFixture, SAMPLES_T, ITERATIONS_T, THREADS
     DECL(GetTickCount64, curTimeMicros64_GTC) \
     DECL(QueryUnbiasedInterruptTime, curTimeMicros64_QUIT) 
 
-#elif defined(__sunos__)
+#elif defined(__sun__)
 
 unsigned long long gethrtime2() {
-    hrtime_t t = getthrtime();
+    hrtime_t t = gethrtime();
     return t;
 }
 
@@ -135,7 +135,7 @@ CLOCK_FUNCTIONS(BENCH_CLOCK_DECL);
 
 // More platform specific functions
 
-#if defined(__linux__) || defined(__sunos__)
+#if defined(__linux__) || defined(__sun__)
 
 #ifdef __sunos__
 
